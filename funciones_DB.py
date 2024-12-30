@@ -1,5 +1,20 @@
+# Importamos tabulate para mostrar los productos en formato tabla
+# Para instalarlo ==> pip install tabulate
+from tabulate import tabulate
+
+from colorama import init, Fore, Back, Style
+
+init(autoreset=True)
+
 # 1. Importamos el módulo sqlite3 para manejar la BD
 import sqlite3
+
+# Importamos el pwinput para ocultar cuando escribe la contraseña (No te muestra nada mientras tipeas)
+import getpass
+
+
+# Importamos el pwinput para ocultar con "*" cuando escribe la contraseña
+import pwinput  # Hay que instalarlo primero (pip install pwinput)
 
 
 # DECLARACIÓN DE CONSTANTES
@@ -53,28 +68,15 @@ def db_crear_tabla_usuarios():
     conexion.close()
 
 
-def db_crear_tabla_usuarios():
-    conexion = sqlite3.connect(ruta_BD)
-    cursor = conexion.cursor()  # Crear un cursor/puntero para interacturar con la base
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS usuarios (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL,
-        password TEXT NOT NULL, 
-        rol TEXT NOT NULL 
-        )
-
-        """
-    )
-    conexion.commit()
-    conexion.close()
-
-
 # Función de login
 def db_login():
     for i in range(3):
         username = input("Ingresa tu nombre de usuario: ")
-        password = input("Ingresa la contraseña: ")
+        # password = input("Ingresa la contraseña: ") # Versión anterior
+        # password = getpass.getpass("Ingresa la contraseña: ")  # Versión con getpass
+        password = pwinput.pwinput(
+            "Ingresa la contraseña: "
+        )  # Versión con pwinput (Muestra "*")
 
         # Consulta para verificar credenciales
         conexion = sqlite3.connect(ruta_BD)
@@ -95,28 +97,63 @@ def db_login():
 
 
 # GESTIÓN DE USUARIOS
-
-
 # Agregar usuario
-def db_agregar_usuario(cursor, conexion):
-    username = input("Ingrese el nombre de usuario: ")
-    password = input("Ingrese la contraseña: ")
+def db_agregar_usuario():
+    try:
+        # Conexión a la base de datos
+        conexion = sqlite3.connect(ruta_BD)
+        cursor = conexion.cursor()
 
-    cursor.execute(
-        "INSERT INTO usuarios (username, password) VALUES (?, ?)", (username, password)
-    )
-    conexion.commit()
-    print("¡Usuario agregado correctamente!")
+        # Entrada de datos del usuario
+        username = input("Ingrese el nombre de usuario: ")
+        password = pwinput.pwinput("Ingrese la contraseña: ")
+        # Y para personalizarlo:
+        # password = pwinput.pwinput("Ingrese la contraseña: ", mask="$")
+        # mask="el_caracter_que_quieras"
+
+        rol = input("Ingrese el rol (administrador/empleado): ")
+
+        # Inserción en la base de datos
+        cursor.execute(
+            "INSERT INTO usuarios (username, password, rol) VALUES (?, ?, ?)",
+            (username, password, rol),  # Pasamos los tres valores esperados
+        )
+        conexion.commit()  # Guardar los cambios
+        print("¡Usuario agregado correctamente!")
+    except sqlite3.Error as e:
+        print(f"Error al agregar usuario: {e}")
+    finally:
+        conexion.close()  # Asegurar el cierre de la conexión
+
+
+def db_buscar_usuario_por_id(id):
+    try:
+        conexion = sqlite3.connect(ruta_BD)
+        cursor = conexion.cursor()
+        query = "SELECT * FROM usuarios WHERE id = ?;"
+        placeholders = (id,)
+        cursor.execute(query, placeholders)
+        usuario = cursor.fetchone()  # Retorna una tupla o None
+        return usuario
+    except sqlite3.Error as e:
+        print(f"Error al buscar usuario: {e}")
+        return None
+    finally:
+        conexion.close()
 
 
 # Modificar usuario
 def db_modificar_usuario(cursor, conexion):
+    # Conexión a la base de datos
+    conexion = sqlite3.connect(ruta_BD)
+    cursor = conexion.cursor()
+
     user_id = int(input("Ingrese el ID del usuario que desea modificar: "))
     new_username = input("Ingrese el nuevo nombre de usuario: ")
-    new_password = input("Ingrese la nueva contraseña: ")
+    new_password = getpass.getpass("Ingrese la nueva contraseña: ")
 
     cursor.execute(
-        "UPDATE usuarios SET username = ?, password = ? WHERE id_usuario = ?",
+        "UPDATE usuarios SET username = ?, password = ? WHERE id = ?",
         (new_username, new_password, user_id),
     )
     if cursor.rowcount > 0:
@@ -189,10 +226,35 @@ def db_mostrar_productos():
         cursor.execute(query)
         lista_productos = cursor.fetchall()  # Retorna una lista de tuplas
         # cursor.fetchone() retorna solo una tupla
-        conexion.close()
-        return lista_productos
+
+        # Encabezados de la tabla
+        encabezados = ["ID", "Nombre", "Descripción", "Categoría", "Cantidad", "Precio"]
+
+        if lista_productos:
+            # Encabezados de la tabla
+            # Muestra en pantalla usando tabulate
+            print(
+                "\n"
+                + Back.RED
+                + Fore.WHITE
+                + Style.BRIGHT
+                + " PRODUCTOS DISPONIBLES "
+                + Style.RESET_ALL
+            )
+            print(tabulate(lista_productos, headers=encabezados, tablefmt="grid"))
+        else:
+            print(
+                Back.RED
+                + Fore.WHITE
+                + Style.BRIGHT
+                + " NO HAY PRODUCTOS QUE MOSTRAR "
+                + Style.RESET_ALL
+            )
+
+        return lista_productos  # Para que no muestre la tupla, ya que ahora usamos el tabulate
+
     except sqlite3.Error as e:
-        print(f"Error al obtener productos: {e}")
+        print(Fore.RED + f"Error al obtener productos: {e}")
         return []
     finally:
         conexion.close()
@@ -208,7 +270,7 @@ def db_buscar_producto_por_id(id):
     try:
         conexion = sqlite3.connect(ruta_BD)
         cursor = conexion.cursor()
-        query = "SELECT * FROM productos WHERE id_producto = ?;"
+        query = "SELECT * FROM productos WHERE id = ?;"
         placeholders = (id,)
         cursor.execute(query, placeholders)
         producto = cursor.fetchone()  # Retorna una tupla o None
@@ -256,7 +318,25 @@ def db_modificar_producto(id, producto):
 
 
 """
+db_actualizar_productono_admin(id, nueva_cantidad)
+
+Actualiza la cantidad del producto según el id
+"""
+
+
+def db_actualizar_producto_no_admin(id, nueva_cantidad):
+    conexion = sqlite3.connect(ruta_BD)
+    cursor = conexion.cursor()
+    query = "UPDATE productos SET cantidad = ? WHERE id = ?"
+    placeholders = (nueva_cantidad, id)
+    cursor.execute(query, placeholders)
+    conexion.commit()
+    conexion.close()
+
+
+"""
 db_eliminar_producto(id)
+
 Eliminar de la tabla el producto con el id que recibo como argumento
 """
 
@@ -277,13 +357,13 @@ def db_eliminar_producto(id):
 
 
 """
-db_get_productos_by_condicion(minimo_stock)
+db_mostrar_productos_by_condicion(minimo_stock)
 
-1. retornar una lista_producto con aquellos registros cuya cantidad < minimo_stock
+Retornar una lista_producto con aquellos registros cuya cantidad < minimo_stock
 """
 
 
-def db_get_productos_by_condicion(minimo_stock):
+def db_mostrar_productos_by_condicion(minimo_stock):
     conexion = sqlite3.connect(ruta_BD)
     cursor = conexion.cursor()
     query = "SELECT * FROM productos WHERE cantidad < ?"

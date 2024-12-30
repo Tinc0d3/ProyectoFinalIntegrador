@@ -16,12 +16,7 @@ from funciones_menu import *
 
 from funciones_DB import (
     db_login,
-    #     menu_mostrar_productos,
     db_agregar_producto,
-    #     menu_modificar_producto,
-    #     menu_eliminar_producto,
-    #     menu_buscar_producto_por_id,
-    #     menu_bajo_stock,
     #     db_agregar_usuario,
     #     db_modificar_usuario,
     #     db_eliminar_usuario,
@@ -57,17 +52,17 @@ def main():
         if opcion == "1":
             menu_agregar_producto()
         elif opcion == "2":
-            db_mostrar_productos()
+            menu_mostrar_productos()
         elif opcion == "3":
-            db_modificar_producto()
+            menu_modificar_producto_no_admin()
         elif opcion == "4":
-            db_eliminar_producto()
+            menu_eliminar_producto()
         elif opcion == "5":
             menu_buscar_producto()
         elif opcion == "6":
-            db_bajo_stock()
+            menu_reporte_bajo_stock()
         elif opcion == "7":
-            db_agregar_usuario()
+            menu_agregar_usuario()
         elif opcion == "8":
             db_modificar_usuario()
         elif opcion == "9":
@@ -76,8 +71,14 @@ def main():
             print("Saliendo del programa...")
             break
         else:
-            print("Opción inválida.")
-        input("\nPresione Enter para continuar...")
+            print("Opción no válida. Por favor, elija una opción válida.")
+
+        continuar = input(
+            "\nIngrese 's' para salir o cualquier tecla para conitnuar: "
+        ).lower()  # pausa para que el usuario pueda ver
+        if continuar == "s":
+            print("\nGracias por usar nuestra App")
+            break
 
 
 # *********************************

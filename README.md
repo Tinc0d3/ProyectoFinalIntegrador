@@ -26,6 +26,22 @@ Estructura del Proyecto Integrador Final (PFI):
         • 5: Generar un reporte de bajo stock
         • 6: Salir de la aplicación
 
+    # También se le agrega un menú extra, el cual será para el usuario que tenga permisos de administrador. El administrador no solo tendrá el menú anterior, sino que también podrá gestionar los usuarios.
+        •  1: Agregar productos
+        •  2: Mostrar productos
+        •  3: Actualizar cantidad de producto 
+        •  4: Eliminar producto 
+        •  5: Buscar producto
+        •  6: Reporte bajo stock
+        •  7: Agregar usuario
+        •  8: Modificar usuario
+        •  9: Eliminar usuario
+        • 10: Salir
+
+    # Se le agrega un sistema de login para poder interactuar con diferentes usuarios según sus privilegios.     
+
+           
+
 4. Estructura de la Base de Datos (SQLite)
     # La BD tendrá una tabla llamada productos con las siguientes columnas: 
         • id: Identificador único (autoincremental)
@@ -62,3 +78,8 @@ opcion = int(input("Por favor, selecciona una opción (1-7): "))
 
 # Mostramos el nro de la opción seleccionada
 print("Has seleccionado: ", opcion)
+
+# Nuevas funciones agregadas
+    • Importamos el pwinput para ocultar cuando escribe la contraseña (No muestra nada mientras tipeas)
+    • Importamos el pwinput para ocultar con "*" cuando escribe la contraseña
+    • Importamos tabulate para generar una tabla mas llamativa al mostrar los productos.
